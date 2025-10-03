@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Link Title Maker</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root{
+    --bg1:#0b1020; --bg2:#0e1833;
+    --glow1:#1c2f61; --glow2:#0f2244;
+    --card:#0f1b34; --border:#20314f;
+    --fg:#e6ecf7; --muted:#a8b3c9;
+  }
+  html,body{height:100%}
+  body{
+    margin:0; color:var(--fg);
+    font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    background:
+      radial-gradient(1000px 700px at 15% 10%, #1c2f61 0%, transparent 70%),
+      radial-gradient(900px 600px at 85% 80%, #0f2244 0%, transparent 70%),
+      linear-gradient(160deg, var(--bg1), var(--bg2));
+  }
+  .brand{
+    position:fixed; top:14px; right:16px; display:flex; align-items:center; gap:10px;
+    padding:6px 12px; background:rgba(11,17,34,.45);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:12px; backdrop-filter: blur(6px);
+    font-weight:700; letter-spacing:.4px; color:#cfe0ff;
+  }
+  .wrap{max-width:980px;margin:66px auto 48px;padding:0 20px}
+  .card{
+    background:linear-gradient(180deg, rgba(23,33,64,.9), rgba(15,27,52,.92));
+    border:1px solid var(--border);
+    border-radius:18px; padding:24px 22px;
+    box-shadow:0 16px 40px rgba(0,0,0,.35);
+  }
+  h1{margin:0 0 8px;font-size:28px;letter-spacing:.3px}
+  p{margin:0 0 18px;color:var(--muted)}
+  label{display:block;margin:.6rem 0 .35rem;color:#cfe0ff}
+  input[type=text]{
+    width:100%; padding:12px 14px; border-radius:12px;
+    border:1px solid #2a3b5f; background:#0c162b; color:var(--fg);
+    outline:none;
+  }
+  input[type=text]:focus{border-color:#3b5a8f; box-shadow:0 0 0 3px rgba(58,116,199,.15)}
+  .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:.8rem 0}
+  .spacer{flex:1}
+  .seg{background:#0c162b; border:1px solid #2a3b5f; border-radius:12px; padding:6px; display:inline-flex; gap:6px;}
+  .seg button{
+    background:transparent; color:#a8b3c9; border:0; padding:8px 10px; border-radius:8px; cursor:pointer
+  }
+  .seg button.active{ background:#1a2b4f; color:#fff; }
+  .btn{
+    padding:10px 14px; border-radius:12px; border:1px solid #27406c;
+    background:linear-gradient(180deg,#1b2f58,#162447);
+    color:#fff; cursor:pointer;
+  }
+  .btn:hover{filter:brightness(1.08)}
+  .preview{
+    margin-top:14px; padding:12px; border-radius:12px;
+    background:#0b1428; border:1px dashed #2a3b5f; color:#e7eefc;
+  }
+  .preview a{ color:#8ab8ff; text-decoration:underline; }
+  .note{color:#a8b3c9; font-size:.9rem; margin-top:8px}
+  .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+</style>
+</head>
+<body>
+  <div class="brand">HIVEEVE Project</div>
+
+  <div class="wrap">
+    <div class="card">
+      <h1>Link Title Maker</h1>
+      <p>Enter an optional <em>Prefix</em>, the <em>Link text</em> to be clickable, and the <em>URL</em>. Then copy a ready-to-paste <strong>linked word only</strong> in HTML or Markdown. (LinkedIn/SMS can only use a raw URL.)</p>
+
+      <label>Prefix (optional, e.g., <code>view repo:</code>)</label>
+      <input id="prefix" type="text" placeholder="view repo:">
+
+      <label>Link text (e.g., Triptych — GitHub)</label>
+      <input id="text" type="text" placeholder="Triptych — GitHub">
+
+      <label>URL (http/https)</label>
+      <input id="url" type="text" placeholder="https://example.com">
+
+      <div class="row">
+        <div class="seg" role="group" aria-label="Clickable part">
+          <button id="mode-text" class="active" type="button">Link text only</button>
+          <button id="mode-all" type="button">Prefix + text</button>
+        </div>
+        <div class="spacer"></div>
+        <span id="status" class="status">Ready.</span>
+        <button id="gen" class="btn" type="button">Generate</button>
+      </div>
+
+      <div class="preview" id="preview">Preview will appear here.</div>
+
+      <div class="actions">
+        <button class="btn" id="copyHtml">Copy HTML (linked)</button>
+        <button class="btn" id="copyHtmlWithPrefix">Copy HTML (with prefix)</button>
+        <button class="btn" id="copyMd">Copy Markdown</button>
+        <button class="btn" id="copyMdWithPrefix">Copy Markdown (with prefix)</button>
+      </div>
+
+      <div class="note">Tip: When you paste into rich editors (e.g., Gmail, Word), “Copy HTML (linked)” inserts only the clickable word/phrase without exposing the URL.</div>
+    </div>
+  </div>
+
+<script>
+const $ = sel => document.querySelector(sel);
+function isURL(u){ try{ const x = new URL(u); return x.protocol === 'https:' || x.protocol === 'http:'; } catch(e){ return false; } }
+let mode = 'text';
+
+function buildParts(prefix, text, url){
+  const pre = (prefix || '').trim().replace(/\s+$/,'');  // trim trailing spaces
+  const txt = (text || '').trim() || 'Your Link';
+  const joined = pre ? pre + ' ' + txt : txt;
+  const html_text_only   = '<a href="' + url + '">' + txt + '</a>';
+  const html_with_prefix = pre ? (pre + ' <a href="' + url + '">' + txt + '</a>') : html_text_only;
+  const html_all_linked  = '<a href="' + url + '">' + joined + '</a>';
+  const md_text_only     = '[' + txt + '](' + url + ')';
+  const md_with_prefix   = pre ? (pre + ' [' + txt + '](' + url + ')') : md_text_only;
+  const md_all_linked    = '[' + joined + '](' + url + ')';
+  return { pre, txt, joined, html_text_only, html_with_prefix, html_all_linked, md_text_only, md_with_prefix, md_all_linked };
+}
+
+function setMode(m){
+  mode = m;
+  $('#mode-text').classList.toggle('active', m==='text');
+  $('#mode-all').classList.toggle('active', m==='all');
+  if($('#url').value) generate();
+}
+$('#mode-text').addEventListener('click', ()=>setMode('text'));
+$('#mode-all').addEventListener('click', ()=>setMode('all'));
+
+let cache = { html:'', htmlWithPrefix:'', md:'', mdWithPrefix:'' };
+
+function generate(){
+  const prefix = $('#prefix').value;
+  const text = $('#text').value;
+  const url = $('#url').value;
+  if(!isURL(url)){
+    $('#status').textContent = 'Please provide a valid http(s) URL.';
+    $('#status').style.color = '#fda4af';
+    $('#preview').innerHTML = '—';
+    return;
+  }
+  const p = buildParts(prefix, text, url);
+  const htmlPreview = (mode === 'all') ? p.html_all_linked : p.html_with_prefix;
+  $('#preview').innerHTML = htmlPreview;
+  $('#status').textContent = 'Generated ✓';
+  $('#status').style.color = '#7ae8a5';
+
+  cache.html           = (mode === 'all') ? p.html_all_linked : p.html_text_only;
+  cache.htmlWithPrefix = (mode === 'all') ? p.html_all_linked : p.html_with_prefix;
+  cache.md             = (mode === 'all') ? p.md_all_linked   : p.md_text_only;
+  cache.mdWithPrefix   = (mode === 'all') ? p.md_all_linked   : p.md_with_prefix;
+}
+
+// Clipboard helpers
+async function copyHTML(html, plainFallback){
+  if (navigator.clipboard && window.ClipboardItem){
+    const data = {
+      "text/html": new Blob([html], {type:"text/html"}),
+      "text/plain": new Blob([plainFallback || html], {type:"text/plain"})
+    };
+    await navigator.clipboard.write([new ClipboardItem(data)]);
+  } else {
+    await navigator.clipboard.writeText(html);
+  }
+}
+async function copyText(t){ await navigator.clipboard.writeText(t); }
+
+$('#gen').addEventListener('click', generate);
+['#prefix','#text','#url'].forEach(s=>{
+  $(s).addEventListener('keydown', e=>{ if(e.key==='Enter') generate(); });
+});
+
+$('#copyHtml').addEventListener('click', async ()=>{
+  if(!cache.html) generate();
+  await copyHTML(cache.html, cache.md);
+  flash('#copyHtml');
+});
+$('#copyHtmlWithPrefix').addEventListener('click', async ()=>{
+  if(!cache.htmlWithPrefix) generate();
+  await copyHTML(cache.htmlWithPrefix, cache.mdWithPrefix);
+  flash('#copyHtmlWithPrefix');
+});
+$('#copyMd').addEventListener('click', async ()=>{
+  if(!cache.md) generate();
+  await copyText(cache.md);
+  flash('#copyMd');
+});
+$('#copyMdWithPrefix').addEventListener('click', async ()=>{
+  if(!cache.mdWithPrefix) generate();
+  await copyText(cache.mdWithPrefix);
+  flash('#copyMdWithPrefix');
+});
+
+function flash(sel){
+  const btn = document.querySelector(sel);
+  const prev = btn.textContent;
+  btn.textContent = 'Copied ✓';
+  setTimeout(()=> btn.textContent = prev, 900);
+}
+</script>
+</body>
+</html>
