@@ -49,8 +49,13 @@ A tiny, free web app that turns any URL into a **clickable word or phrase**. Per
 
 Open `index.html` locally in a browser. If the **Copy** buttons don’t insert styled HTML (varies by browser security), the app falls back to copying plain text/Markdown.
 
----
+## License
+Code: MIT © 2025 Mariusz Włodarczyk  
+Docs/content: CC BY 4.0  
+“HIVEEVE Project” is a project name; no trademark license is granted.
 
 ## Credits
 
 Built for the **HiveEve Project**. Free to use.
+
+---
